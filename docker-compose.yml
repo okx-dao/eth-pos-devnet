@@ -6,7 +6,7 @@ services:
       - testnet
       - generate-genesis
       - --fork=bellatrix
-      - --num-validators=1
+      - --num-validators=64
       - --output-ssz=/consensus/genesis.ssz
       - --chain-config-file=/consensus/config.yml
       - --geth-genesis-json-in=/execution/genesis.json
@@ -81,33 +81,39 @@ services:
       - ./consensus:/consensus
       - ./jwtsecret:/execution/jwtsecret
 
-  validator-create-wallet:
-    image: "gcr.io/prysmaticlabs/prysm/validator:latest"
-    command: wallet create --wallet-dir=/consensus/wallet --wallet-password-file=/consensus/pwd.txt --keymanager-kind=imported --accept-terms-of-use
-    volumes:
-      - ./consensus:/consensus
-
   validator-keystore:
     image: "gcr.io/prysmaticlabs/prysm/validator:latest"
-    command: accounts import --keys-dir=/consensus/validator-import-keys
-    depends_on:
-      validator-create-wallet:
-        condition: service_completed_successfully
+    command: accounts import --keys-dir=/consensus/validator_keys --wallet-dir=/consensus/wallet --wallet-password-file=/consensus/pwd.txt --account-password-file=/consensus/pwd.txt --accept-terms-of-use
     volumes:
       - ./consensus:/consensus
       - ./consensus/wallet:/consensus/wallet
-      - ./consensus/validator-import-keys:/consensus/validator-import-keys
+      - ./consensus/validator_keys:/consensus/validator_keys
 
   validator:
     image: "gcr.io/prysmaticlabs/prysm/validator:latest"
     command:
       - --beacon-rpc-provider=beacon-chain:4000
       - --datadir=/consensus/validatordata
+      - --wallet-password-file=/consensus/pwd.txt
+      - --accept-terms-of-use
+      - --interop-num-validators=64
+      - --interop-start-index=0
+      - --chain-config-file=/consensus/config.yml
+    depends_on:
+      beacon-chain:
+        condition: service_started
+    volumes:
+      - ./consensus:/consensus
+      - ./consensus/validator_keys:/consensus/validator_keys
+
+  validatorcustom:
+    image: "gcr.io/prysmaticlabs/prysm/validator:latest"
+    command:
+      - --beacon-rpc-provider=beacon-chain:4000
+      - --datadir=/consensus/validatordata_custom
       - --wallet-dir=/consensus/wallet
       - --wallet-password-file=/consensus/pwd.txt
       - --accept-terms-of-use
-      - --interop-num-validators=1
-      - --interop-start-index=0
       - --chain-config-file=/consensus/config.yml
     depends_on:
       beacon-chain:
@@ -117,4 +123,4 @@ services:
     volumes:
       - ./consensus:/consensus
       - ./consensus/wallet:/consensus/wallet
-      - ./consensus/validator-import-keys:/consensus/validator-import-keys
+      - ./consensus/validator_keys:/consensus/validator_keys
