@@ -6,7 +6,7 @@ services:
       - testnet
       - generate-genesis
       - --fork=bellatrix
-      - --num-validators=64
+      - --num-validators=1
       - --output-ssz=/consensus/genesis.ssz
       - --chain-config-file=/consensus/config.yml
       - --geth-genesis-json-in=/execution/genesis.json
@@ -96,7 +96,7 @@ services:
       - --datadir=/consensus/validatordata
       - --wallet-password-file=/consensus/pwd.txt
       - --accept-terms-of-use
-      - --interop-num-validators=64
+      - --interop-num-validators=1
       - --interop-start-index=0
       - --chain-config-file=/consensus/config.yml
     depends_on:
